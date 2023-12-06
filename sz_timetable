@@ -1,0 +1,36 @@
+import requests
+from bs4 import BeautifulSoup
+import csv
+
+url1_prefix = 'https://szgj.2500.tv/line/bus?id='
+url2_prefix = 'https://szgj.2500.tv/api/v1/busline/bus?line_guid='
+guids = ['9d090af5-c5c6-4db8-b34e-2e8af4f63216', 'b9434375-db2d-49c0-9561-938fa7b29071']
+for guid in guids:
+    url1 = url1_prefix + guid
+    response1 = requests.get(url1)
+    soup1 = BeautifulSoup(response1.text, 'html.parser')
+    number = str(soup1.title.text).strip().split()[0]
+    number_new = number.replace(' ', '')
+    direction = soup1.select('body > div.wholepage > div.bg > div.topinfodiv > div:nth-child(2)')
+    direction_new = direction[0].text.replace(' ', '')
+    url2 = url2_prefix + guid
+    response2 = requests.get(url2)
+    soup2 = BeautifulSoup(response2.text,'html.parser')
+    output2 = str(soup2)
+    starttime = output2.split('"nextShift":"')[1].split('"')[0]
+    with open('sz_time.csv', 'r') as file:
+        reader = ''
+        reader = csv.reader(file)
+        rows = ''
+        rows = list(reader)
+    if starttime != '':
+        dbuscard = output2.split('"nextBus":"')[1].split('"')[0]
+        dbuscard = dbuscard.replace("\\u82cf", "苏")
+        print(dbuscard)
+        row_new = [number, direction_new, starttime, dbuscard]
+        if row_new in rows:
+            continue
+        else:
+            with open('sz_time.csv', 'a', newline='') as file:
+                writer = csv.writer(file)
+                writer.writerow(row_new)
